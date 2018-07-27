@@ -1,2 +1,2 @@
-# Quantum_Genetic_Algorithm_For_Credit_Scoring_Problem-
-Quantum Genetic Algorithm For Credit Scoring Problem
+# Quantum Genetic Algorithm For Credit Scoring Problem
+
