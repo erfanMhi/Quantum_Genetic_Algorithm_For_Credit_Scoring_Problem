@@ -733,7 +733,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
 
 
 def multiple_run(genetic_config,number_of_run=10) :
-    if os.path.exist(chromosome_file+'.pkl') :
+    if os.path.exists(chromosome_file+'.pkl') :
         Tools.chromosomes = Tools.load_from_file(chromosome_file)
     out = np.ndarray(10)
     for i in range(number_of_run) :
