@@ -77,6 +77,8 @@ from sklearn.model_selection import KFold, cross_val_score
 
 
 output_file = 'output'
+chromosome_file = 'chromosomes'
+
 # pop_size = 100
 # gen_num = 100 # it could be 300 too
 # n_max = 15

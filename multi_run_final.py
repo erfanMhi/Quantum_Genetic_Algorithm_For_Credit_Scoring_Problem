@@ -69,7 +69,8 @@ from keras.layers import Input, Dense, Activation
 from keras.optimizers import adam, SGD
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import KFold, cross_val_score
-
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.preprocessing import MinMaxScaler
 
 # ### Constants Decleration
 
@@ -162,6 +163,7 @@ australian_dataset = os.path.join(data_root,'australian dataset.xlsx')
 
 
 # ### Tools Class Implementation
+skf = StratifiedKFold(n_splits=10)
 
 # In[10]:
 
@@ -208,8 +210,8 @@ class Tools :
         model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
         sgd = SGD(lr=lr, momentum=m)
         # loss could be "mse" too
-        model.compile(loss='binary_crossentropy',metrics=['accuracy','binary_accuracy'],optimizer=sgd)
-        return lambda: model
+        model.compile(loss='binary_crossentropy',metrics=['accuracy'],optimizer=sgd)
+        return model
     
     @staticmethod
     def save_to_file(path,data) :
@@ -253,8 +255,9 @@ class Qbit :
 x_data = np.array(pd.read_excel(german_data,header=None))
 y_data = np.array(pd.read_excel(german_label,header=None))
 print('Dataset Shape : {}\nDataset Labels Shape : {}'.format(x_data.shape,y_data.shape))
-
-
+mx = MinMaxScaler()
+mx.fit(x_data)
+p_x_data = mx.transform(x_data)
 # ### Initialization
 
 # In[14]:
@@ -386,7 +389,7 @@ toolbox.register("rotate", rotate)
 # In[19]:
 
 
-def evaluate(ind,X,Y,train_cycles=450,lr=.1,m=.5) :
+def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     """Train one layer feedforward neural network
     Args :
        X : training data
@@ -401,14 +404,20 @@ def evaluate(ind,X,Y,train_cycles=450,lr=.1,m=.5) :
     sel_features = np.array([qb.bit for qb in ind])
     hiddenNum = len(sel_features) + np.sum(sel_features)
     string_arr = ''.join(map(str, 1*sel_features))
+    sum_val_acc = 0
     if string_arr not in Tools.chromosomes :
-        model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
-        classifier = KerasClassifier(build_fn=model, epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
-        Tools.chromosomes[string_arr] = np.mean(cross_val_score(classifier, X[:,sel_features==1], Y, cv=10,verbose=0))
-    
+        for train_index, test_index in skf.split(X, Y):
+            model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
+            hist = model.fit(X[train_index,:],Y[train_index,:], epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
+            ev = model.evaluate(X[test_index,:],Y[test_index,:])
+            sum_val_acc += ev[1]
+            del model
+        
+        Tools.chromosomes[string_arr] = sum_val_acc/10
+
     return (Tools.chromosomes[string_arr],)
 
-toolbox.register("evaluate", evaluate,X=x_data,Y=y_data,**nn_config)
+toolbox.register("evaluate", evaluate,X=p_x_data,Y=y_data,**nn_config)
 
 
 # #### Selection
@@ -735,7 +744,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
 def multiple_run(genetic_config,number_of_run=10) :
     if os.path.exists(chromosome_file+'.pkl') :
         Tools.chromosomes = Tools.load_from_file(chromosome_file)
-    out = np.ndarray(10)
+    out = [None for _ in range(number_of_run)]
     for i in range(number_of_run) :
         out[i] = multiprocess_main(**genetic_config)
         print('{} run ended with fitness : {} '.format(i,out[i]))
