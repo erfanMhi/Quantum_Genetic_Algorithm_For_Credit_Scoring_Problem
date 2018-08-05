@@ -735,7 +735,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
 def multiple_run(genetic_config,number_of_run=10) :
     if os.path.exists(chromosome_file+'.pkl') :
         Tools.chromosomes = Tools.load_from_file(chromosome_file)
-    out = np.ndarray(10)
+    out = np.array([None for _ in range(number_of_run)])
     for i in range(number_of_run) :
         out[i] = multiprocess_main(**genetic_config)
         print('{} run ended with fitness : {} '.format(i,out[i]))
