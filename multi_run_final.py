@@ -405,11 +405,12 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     hiddenNum = len(sel_features) + np.sum(sel_features)
     string_arr = ''.join(map(str, 1*sel_features))
     sum_val_acc = 0
+    p_X = X[:,sel_features==1]
     if string_arr not in Tools.chromosomes :
         for train_index, test_index in skf.split(X, Y):
             model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
-            hist = model.fit(X[train_index,:],Y[train_index,:], epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
-            ev = model.evaluate(X[test_index,:],Y[test_index,:])
+            hist = model.fit(p_X[train_index,:],Y[train_index,:], epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
+            ev = model.evaluate(p_X[test_index,:],Y[test_index,:])
             sum_val_acc += ev[1]
             del model
         
