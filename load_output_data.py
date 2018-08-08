@@ -13,13 +13,12 @@ import pandas as pd
 from deap import tools
 from deap import base, creator
 from six.moves.urllib.request import urlretrieve
+<<<<<<< HEAD
 
 
 # ### Constants Decleration
 
 output_file = 'output'
-
-
 
 
 
@@ -241,4 +240,3 @@ toolbox.register("rotate", rotate)
 
 if __name__ == '__main__' :
     print(Tools.load_from_file('output(0)'))
-
