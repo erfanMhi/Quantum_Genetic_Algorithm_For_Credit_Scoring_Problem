@@ -13,7 +13,6 @@ import pandas as pd
 from deap import tools
 from deap import base, creator
 from six.moves.urllib.request import urlretrieve
-<<<<<<< HEAD
 
 
 # ### Constants Decleration
