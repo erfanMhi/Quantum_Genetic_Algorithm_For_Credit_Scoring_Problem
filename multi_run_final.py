@@ -410,7 +410,7 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
         for train_index, test_index in skf.split(X, Y):
             model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
             hist = model.fit(p_X[train_index,:],Y[train_index,:], epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
-            ev = model.evaluate(p_X[test_index,:],Y[test_index,:])
+            ev = model.evaluate(p_X[test_index,:],Y[test_index,:],verbose=0)
             sum_val_acc += ev[1]
             del model
         

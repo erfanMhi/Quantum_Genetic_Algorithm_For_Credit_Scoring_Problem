@@ -67,105 +67,6 @@ from six.moves.urllib.request import urlretrieve
 from keras.models import Sequential
 from keras.layers import Input, Dense, Activation
 from keras.optimizers import adam, SGD
-from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.model_selection import KFold, cross_val_score
-
-
-# ### Constants Decleration
-
-# In[5]:
-
-
-output_file = 'output'
-# pop_size = 100
-# gen_num = 100 # it could be 300 too
-# n_max = 15
-# m_max = 25
-# pc = 0.9
-# pm = 0.01
-# pcc = (1 - pc) * random.random() + pc
-# pmm = (2*pm - pm) * random.random() + pm
-
-
-# #### Genetic Algorithm Configurations`
-
-# In[6]:
-
-
-pc = 0.9
-pm = 0.01
-genetic_config = { 
-    'max_feature_num': 12,
-    'min_feature_num': 5,
-    'pop_size': 100,
-    'iter_num': 100,
-    'n_max': 15,
-    'm_max': 25,
-    'pm': 0.01,
-    'pc': 0.9,
-    'pmm': (2*pm - pm) * random.random() + pm,
-    'pcc': (1 - pc) * random.random() + pc,
-#     'selection' : '',
-#     'crossover' : '',
-#     'mutation' : '',
-#     'rotation' : True,
-}
-
-
-# #### Neural Network Configurations
-
-# In[7]:
-
-
-nn_config = {
-    # 'lr': np.random.uniform(0.3, 1.0),
-    # 'train_cycles': np.random.uniform(300, 600),
-    # 'm': np.random.uniform(0.2, 0.7)
-    'm':.7,
-    'train_cycles':600,
-    'lr': .3
-}
-print(nn_config)
-
-# #### Reduced Features Announced By Credit Scorring Essay
-
-# In[8]:
-
-
-reduced_feature_config = {
-    'IG': [ 0,  1,  2,  6,  9, 10, 11, 19, 20, 21, 22, 24],
-    'gain_ratio': [ 0,  1,  2,  4,  9, 10, 19, 20, 21, 22, 24, 29],
-    'correlation': [ 0,  1,  2,  4,  6,  9, 10, 11, 19, 20, 22, 24],
-    'voting': [ 0,  1,  2,  9, 10, 19, 20, 22, 24],
-    'current_solution': [ 0,  1,  2,  3, 10, 12, 13, 14, 17, 19, 20, 27, 29]
-}
-reduced_feature_subset = []
-for key in reduced_feature_config : 
-    reduced_feature_subset += reduced_feature_config[key]
-reduced_feature_subset_rank = {}
-for feature in reduced_feature_subset:
-    if feature in reduced_feature_subset_rank:
-        reduced_feature_subset_rank[feature] += 1
-    else :
-        reduced_feature_subset_rank[feature] = 1
-reduced_feature_subset = sorted(list(set(reduced_feature_subset)))
-
-
-# #### Datasets Path
-
-# In[9]:
-
-
-data_root = 'data'
-german_data = os.path.join(data_root,'GermanCreditInput.xls')
-german_label = os.path.join(data_root,'GermanCreditOutputClass1columnknn.xls')
-australian_dataset = os.path.join(data_root,'australian dataset.xlsx')
-
-
-# ### Tools Class Implementation
-
-# In[10]:
-
 
 class Tools :
     
@@ -736,5 +637,4 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
 
 
 if __name__ == '__main__' :
-    print(Tools.load_from_file(output_file))
-
+    print(Tools.load_from_file('output(0)'))
