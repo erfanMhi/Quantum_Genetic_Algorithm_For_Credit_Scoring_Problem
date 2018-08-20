@@ -387,7 +387,7 @@ toolbox.register("rotate", rotate)
 # In[19]:
 
 
-def evaluate(ind,X,Y,train_cycles=450,lr=.1,m=.5) :
+def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     """Train one layer feedforward neural network
     Args :
        X : training data
@@ -402,14 +402,19 @@ def evaluate(ind,X,Y,train_cycles=450,lr=.1,m=.5) :
     sel_features = np.array([qb.bit for qb in ind])
     hiddenNum = len(sel_features) + np.sum(sel_features)
     string_arr = ''.join(map(str, 1*sel_features))
+    sum_val_acc = 0
+    p_X = X[:,sel_features==1]
     if string_arr not in Tools.chromosomes :
-        model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
-        classifier = KerasClassifier(build_fn=model, epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
-        Tools.chromosomes[string_arr] = np.mean(cross_val_score(classifier, X[:,sel_features==1], Y, cv=10,verbose=0))
-    
-    return (Tools.chromosomes[string_arr],)
+        for train_index, test_index in skf.split(X, Y):
+            model = Tools.keras_model(np.sum(sel_features),int(hiddenNum),lr,m)
+            hist = model.fit(p_X[train_index,:],Y[train_index,:], epochs=int(train_cycles),batch_size=int(X.shape[0]),verbose=0)
+            ev = model.evaluate(p_X[test_index,:],Y[test_index,:],verbose=0)
+            sum_val_acc += ev[1]
+            del model
+        
+        Tools.chromosomes[string_arr] = sum_val_acc/10
 
-toolbox.register("evaluate", evaluate,X=x_data,Y=y_data,**nn_config)
+    return (Tools.chromosomes[string_arr],)
 
 
 # #### Selection
