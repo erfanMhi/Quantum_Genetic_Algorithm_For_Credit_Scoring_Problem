@@ -1,52 +1,4 @@
 
-# coding: utf-8
-
-# # Quantum Inspired Genetic Algorithm For Credit Scoring Problem
-
-# # To Do List
-# * Create Diffrent Version Of Algorithm : Diffrent Crossover,Mutation and ...p
-# * Add Feature Restriction(Crossover and Population should be modified.)
-# * Add Feature Preprocessing
-# * MinMaxScaler +
-# * Add MultiProcessing
-
-# # Done So Far
-# * All The Main Functions Implemented
-# * all functions debugged
-# * Whole Algorithm Implemented
-
-# ## contents
-# * Preconfiguration
-#     * Importing Libraries
-#     * Constants Decleration
-#         * Genetic Algorithm Configurations
-#         * Neural Network Configurations
-#         * Reduced Features Announced By Credit Scorring Essay
-#         * Datasets Path
-#     * Tools Class Implementation
-#     * Creating Types
-#     * Qbit Class Implementation
-#     * Reading Data
-#     * Initialization
-#     * Operators
-#         * Converting To Bit
-#         * Mutation
-#         * Crossover
-#         * Selection
-#         * Rotation
-#         * Catastroph
-#         * Fitness Calculation
-#         
-# * Implementation
-#     * Quantum Algorithm
-
-# ## Preconfiguration
-
-# ### Importing Libraries
-
-# In[2]:
-
-
 from __future__ import print_function
 import random
 import os
@@ -69,67 +21,11 @@ from keras.layers import Input, Dense, Activation
 from keras.optimizers import adam, SGD
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import KFold, cross_val_score
-
-
-# ### Constants Decleration
-
-# In[5]:
-
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.preprocessing import MinMaxScaler
 
 output_file = 'output'
 chromosome_file = 'chromosomes'
-
-# pop_size = 100
-# gen_num = 100 # it could be 300 too
-# n_max = 15
-# m_max = 25
-# pc = 0.9
-# pm = 0.01
-# pcc = (1 - pc) * random.random() + pc
-# pmm = (2*pm - pm) * random.random() + pm
-
-
-# #### Genetic Algorithm Configurations`
-
-# In[6]:
-
-
-pc = 0.9
-pm = 0.01
-genetic_config = { 
-    'max_feature_num': 12,
-    'min_feature_num': 5,
-    'pop_size': 100,
-    'iter_num': 100,
-    'n_max': 15,
-    'm_max': 25,
-    'pm': 0.01,
-    'pc': 0.9,
-    'pmm': (2*pm - pm) * random.random() + pm,
-    'pcc': (1 - pc) * random.random() + pc,
-#     'selection' : '',
-#     'crossover' : '',
-#     'mutation' : '',
-#     'rotation' : True,
-}
-
-
-# #### Neural Network Configurations
-
-
-nn_config = {
-    # 'lr': np.random.uniform(0.3, 1.0),
-    # 'train_cycles': np.random.uniform(300, 600),
-    # 'm': np.random.uniform(0.2, 0.7)
-    'm':.7,
-    'train_cycles':600,
-    'lr': .3
-}
-print(nn_config)
-
-# #### Reduced Features Announced By Credit Scorring Essay
-
-# In[8]:
 
 
 reduced_feature_config = {
@@ -148,13 +44,45 @@ for feature in reduced_feature_subset:
         reduced_feature_subset_rank[feature] += 1
     else :
         reduced_feature_subset_rank[feature] = 1
+mask = np.zeros(30)
+for key in reduced_feature_subset_rank :
+    mask[key] = reduced_feature_subset_rank[key]
 reduced_feature_subset = sorted(list(set(reduced_feature_subset)))
+mask += 1
+
+pc = 0.9
+pm = 0.01
+genetic_config = { 
+    'max_feature_num': 12,
+    'min_feature_num': 5,
+    'pop_size': 100,
+    'iter_num': 100,
+    'n_max': 15,
+    'm_max': 25,
+    'pm': 0.01,
+    'pc': 0.9,
+    'pmm': (2*pm - pm) * random.random() + pm,
+    'pcc': (1 - pc) * random.random() + pc,
+    'mask_best_num':1,
+    'mask_evapuration_rate':.1,
+    'mask_update_rate':.5,
+    'epsilon':1,
+    'chrom_mask': mask
+#     'crossover' : '',
+#     'mutation' : '',
+#     'rotation' : True,
+}
 
 
-# #### Datasets Path
-
-# In[9]:
-
+nn_config = {
+    # 'lr': np.random.uniform(0.3, 1.0),
+    # 'train_cycles': np.random.uniform(300, 600),
+    # 'm': np.random.uniform(0.2, 0.7)
+    'm':.7,
+    'train_cycles':600,
+    'lr': .3
+}
+print(nn_config)
 
 data_root = 'data'
 german_data = os.path.join(data_root,'GermanCreditInput.xls')
@@ -221,20 +149,8 @@ class Tools :
         with open(path + '.pkl', 'rb') as f:
             return pickle.load(f)
 
-
-# ### Creating Types
-
-# In[11]:
-
-
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
-
-
-# ### Qbit Class Implementation
-
-# In[12]:
-
 
 class Qbit :
     def __init__(self) :
@@ -255,11 +171,7 @@ x_data = np.array(pd.read_excel(german_data,header=None))
 y_data = np.array(pd.read_excel(german_label,header=None))
 print('Dataset Shape : {}\nDataset Labels Shape : {}'.format(x_data.shape,y_data.shape))
 
-
-# ### Initialization
-
 # In[14]:
-
 
 toolbox = base.Toolbox()
 toolbox.register("attribute", Qbit)
@@ -267,13 +179,7 @@ toolbox.register("individual", tools.initRepeat, creator.Individual,
                  toolbox.attribute, n=x_data.shape[1]) # Length of each chromosome : Number of Features of Dataset
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-
-# ### Operators Implementation 
-
-# #### Converting To Bit
-
 # In[15]:
-
 
 def toBit(ind) :
     "transform qbit to zero or one"
@@ -285,32 +191,13 @@ def toBit(ind) :
     return ind
 toolbox.register("toBit",toBit)
 
-
-# #### Mutation
-
-# In[16]:
-
-
-def mutate(ind, indpb) :
-    for qb in ind :
-        if indpb > np.random.random() :
-            qb.a,qb.b = qb.b,qb.a
+def mutate(ind) :
+    rnd = np.random.randint(len(ind))
+    ind[rnd].a,ind[rnd].b = ind[rnd].b,ind[rnd].a
     return ind
-toolbox.register("mutate", mutate, indpb=1)
-
-
-# #### Crossover
-
-# In[17]:
-
+toolbox.register("mutate", mutate)
 
 toolbox.register("mate", tools.cxTwoPoint)
-
-
-# #### Rotation
-
-# In[18]:
-
 
 def rotate(ind,b_ind,isGreater) :
     for qb,b_qb in zip(ind,b_ind) :
@@ -379,13 +266,8 @@ def rotate(ind,b_ind,isGreater) :
         qb.a,qb.b = np.dot(
             np.array([[np.cos(t),-np.sin(t)],[np.sin(t),np.cos(t)]]),np.array([qb.a,qb.b])
         )
+
 toolbox.register("rotate", rotate)
-
-
-# #### Fitness Calculation
-
-# In[19]:
-
 
 def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     """Train one layer feedforward neural network
@@ -417,11 +299,6 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     return (Tools.chromosomes[string_arr],)
 
 
-# #### Selection
-
-# In[20]:
-
-
 def select(pop,pop_size) :    
     # Roulette selection
     offsprings = list(map(toolbox.clone,tools.selRoulette(pop,pop_size)))
@@ -443,31 +320,6 @@ def select(pop,pop_size) :
 
 toolbox.register("select", select, pop_size=genetic_config['pop_size'])
 
-
-# In[21]:
-
-
-# pop = toolbox.population(n=4)
-# CXPB, MUTPB, NGEN = 0.5, 0.2, 40
-# best_ind = None
-# # Evaluate the entire population
-# for ind in pop:
-#     toolbox.toBit(ind)
-#     ind.fitness.values = toolbox.evaluate(ind)
-#     if not best_ind or best_ind.fitness.values[0] < ind.fitness.values[0] :
-#         best_ind = ind
-        
-# offspring = toolbox.select(pop)
-# for qb in offspring[0] :
-#     print(qb)
-# toolbox.rotate(offspring[0],best_ind,offspring[0].fitness.values[0] < best_ind.fitness.values[0])
-# print('-------------------------')
-# for qb in offspring[0] :
-#     print(qb)
-
-
-# #### Catastroph
-
 # In[22]:
 
 
@@ -478,16 +330,9 @@ def catastrophe(best_ind,pop_size) :
 toolbox.register("catastrophe", catastrophe, pop_size=genetic_config['pop_size'])
 
 
-# ## Implementation
-
-# ### Quantum Algorithm
-
-# In[23]:
-
-
-def main(pop_size,iter_num,n_max,m_max,
-        max_feature_num,min_feature_num,
-        pm,pc,pmm,pcc):
+def main(pop_size, iter_num, n_max, m_max,
+        max_feature_num, min_feature_num,
+        pm, pc, pmm, pcc):
     
     best_fits = np.array([])
     best_same_iter = 0
@@ -600,32 +445,53 @@ def main(pop_size,iter_num,n_max,m_max,
 # ## Multiprocess Quantum Algorithm
 
 # In[3]:
+def mask_update(mask,best_ind,update_rate=.5,evapuration_rate=.1,inline=True) :
+    for i in range(len(mask)) :
+        mask[i] *= (1-evapuration_rate)
+        mask[i] += best_ind[i].bit*update_rate
 
+def mask_collapse(mask,epsilon=1) :
+    collapsed_mask = np.ndarray(len(mask))
+    max_val = max(mask) +epsilon
+    for i in range(len(mask)) :
+        collapsed_mask[i] = 1 if np.random.random() < mask[i]/max_val else 0
+    return collapsed_mask
 
 def multiprocess_main(pop_size,iter_num,n_max,m_max,
-        max_feature_num,min_feature_num,
-        pm,pc,pmm,pcc):
+                    max_feature_num,min_feature_num,
+                    pm,pc,pmm,pcc,chrom_mask,mask_best_num=1,
+                    mask_evapuration_rate=.1,mask_update_rate=.5,
+                    epsilon=1):
     
     best_fits = np.array([])
     best_same_iter = 0
     best_ind = None
     current_best_ind = None
+    mask = copy.deepcopy(chrom_mask)
     
     pop = toolbox.population(n=pop_size)
     
-    # Evaluate the entire population
+    # Callapse Mask
+    collapsed_mask = mask_collapse(mask,epsilon)
+    # Collapsing Individual Bits
     for i,ind in enumerate(pop):
         toolbox.toBit(ind)
+    # Masking Individual Bit Values
+    masked_pop = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in pop]
+    # Calculating Fitness Of Individuals In Parallel
     with contextlib.closing(Pool(processes=25)) as pool:
-        fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in pop))
+        fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_pop))
         fitnesses = fitnesses.get()
     for ind,fitness in zip(pop,fitnesses):
         ind.fitness.values = fitness
         if not best_ind or best_ind.fitness.values[0] < ind.fitness.values[0] :
             best_ind = ind
             current_best_ind = ind
+    # Updating And Evapurating Mask Values
+    mask_update(mask,best_ind,mask_evapuration_rate=.1,mask_update_rate=.5)
     best_fits = np.append(best_fits,best_ind.fitness.values[0])
-        
+    
+    
     for generation in range(1,iter_num) :   
         print('--------------------generation : {} ------------------'.format(generation))
         print('best fitness : {}'.format(best_ind.fitness.values[0]))
@@ -646,20 +512,27 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
                     toolbox.mutate(mutant)
                     del mutant.fitness.values
 
-            start = time.time()
-            # Evaluate Individual 
-            current_best_ind = None
-            for i,ind in enumerate(offspring):
-                toolbox.toBit(ind)
             
-            with contextlib.closing(Pool(processes=25)) as pool:
-                fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in offspring))
+            start = time.time()
+            current_best_ind = None
+            # Callapse Mask
+            collapsed_mask = mask_collapse(mask,epsilon)
+            # Collapsing Individual Bits
+            for i,ind in enumerate(pop):
+                toolbox.toBit(ind)
+            # Masking Individual Bit Values
+            masked_offspring = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in offspring]
+            # Calculating Fitness Of Individuals In Parallel
+            with contextlib.closing(Pool(processes=20)) as pool:
+                fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_offspring))
                 fitnesses = fitnesses.get()
                 
             for ind,fitness in zip(offspring,fitnesses):
                 ind.fitness.values = fitness
                 if not current_best_ind or current_best_ind.fitness.values[0] < ind.fitness.values[0] :
                     current_best_ind = ind
+            # Updating And Evapurating Mask Values
+            mask_update(mask,best_ind,mask_evapuration_rate=.1,mask_update_rate=.5)
             print('First Evaluation Time : {}'.format(time.time() - start))
             if current_best_ind.fitness.values[0] > best_ind.fitness.values[0] :
                 best_ind = toolbox.clone(current_best_ind)
@@ -687,19 +560,25 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
                     del mutant.fitness.values
             
             start = time.time()
-            # Evaluate Individual 
             current_best_ind = None
-            for i,ind in enumerate(offspring):
+            # Callapse Mask
+            collapsed_mask = mask_collapse(mask,epsilon)
+            # Collapsing Individual Bits
+            for i,ind in enumerate(pop):
                 toolbox.toBit(ind)
-            
-            with contextlib.closing(Pool(processes=25)) as pool:
-                fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in offspring))
+            # Masking Individual Bit Values
+            masked_offspring = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in offspring]
+            # Calculating Fitness Of Individuals In Parallel
+            with contextlib.closing(Pool(processes=20)) as pool:
+                fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_offspring))
                 fitnesses = fitnesses.get()
                 
             for ind,fitness in zip(offspring,fitnesses):
                 ind.fitness.values = fitness
                 if not current_best_ind or current_best_ind.fitness.values[0] < ind.fitness.values[0] :
                     current_best_ind = ind
+            # Updating And Evapurating Mask Values
+            mask_update(mask,best_ind,mask_evapuration_rate=.1,mask_update_rate=.5)
             print('First Evaluation Time : {}'.format(time.time() - start))
             if current_best_ind.fitness.values[0] > best_ind.fitness.values[0] :
                 best_ind = toolbox.clone(current_best_ind)
@@ -716,17 +595,24 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
         # Evaluate Individual 
         start = time.time()
         current_best_ind = None
+        # Callapse Mask
+        collapsed_mask = mask_collapse(mask,epsilon)
+        # Collapsing Individual Bits
         for i,ind in enumerate(pop):
             toolbox.toBit(ind)
+        # Masking Individual Bit Values
+        masked_pop = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in pop]
 
-        with contextlib.closing(Pool(processes=25)) as pool:
-            fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in pop))
+        with contextlib.closing(Pool(processes=20)) as pool:
+            fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_pop))
             fitnesses = fitnesses.get()
         print(fitnesses)
         for ind,fitness in zip(pop,fitnesses):
             ind.fitness.values = fitness
             if not current_best_ind or current_best_ind.fitness.values[0] < ind.fitness.values[0] :
                 current_best_ind = ind
+        # Updating And Evapurating Mask Values
+        mask_update(mask,best_ind,mask_evapuration_rate=.1,mask_update_rate=.5)
         print('Second Evaluation Time : {}'.format(time.time() - start))    
         best_fits = np.append(best_fits,current_best_ind.fitness.values[0])
         if current_best_ind.fitness.values[0] > best_ind.fitness.values[0] :
@@ -735,10 +621,6 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
         else :
             best_same_iter += 1
     return best_fits,best_ind
-
-
-# In[ ]:
-
 
 if __name__ == '__main__' :
     out = multiprocess_main(**genetic_config)
