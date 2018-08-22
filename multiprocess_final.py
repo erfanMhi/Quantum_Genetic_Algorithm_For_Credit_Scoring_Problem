@@ -27,6 +27,7 @@ from sklearn.preprocessing import MinMaxScaler
 output_file = 'output'
 chromosome_file = 'chromosomes'
 
+skf = StratifiedKFold(n_splits=10)
 
 reduced_feature_config = {
     'IG': [ 0,  1,  2,  6,  9, 10, 11, 19, 20, 21, 22, 24],
@@ -137,8 +138,8 @@ class Tools :
         model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
         sgd = SGD(lr=lr, momentum=m)
         # loss could be "mse" too
-        model.compile(loss='binary_crossentropy',metrics=['accuracy','binary_accuracy'],optimizer=sgd)
-        return lambda: model
+        model.compile(loss='binary_crossentropy',metrics=['accuracy'],optimizer=sgd)
+        return model
     
     @staticmethod
     def save_to_file(path,data) :
@@ -170,7 +171,9 @@ class Qbit :
 x_data = np.array(pd.read_excel(german_data,header=None))
 y_data = np.array(pd.read_excel(german_label,header=None))
 print('Dataset Shape : {}\nDataset Labels Shape : {}'.format(x_data.shape,y_data.shape))
-
+mx = MinMaxScaler()
+mx.fit(x_data)
+x_data = mx.transform(x_data)
 # In[14]:
 
 toolbox = base.Toolbox()
@@ -281,7 +284,7 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
     Returns :
        'float' accuracy
     """
-    sel_features = np.array([qb.bit for qb in ind])
+    sel_features = np.array(ind).astype(np.int32)
     hiddenNum = len(sel_features) + np.sum(sel_features)
     string_arr = ''.join(map(str, 1*sel_features))
     sum_val_acc = 0
@@ -298,6 +301,7 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
 
     return (Tools.chromosomes[string_arr],)
 
+toolbox.register("evaluate", evaluate,X=x_data,Y=y_data,**nn_config)
 
 def select(pop,pop_size) :    
     # Roulette selection
@@ -445,10 +449,10 @@ def main(pop_size, iter_num, n_max, m_max,
 # ## Multiprocess Quantum Algorithm
 
 # In[3]:
-def mask_update(mask,best_ind,update_rate=.5,evapuration_rate=.1,inline=True) :
+def mask_update(mask,best_ind,mask_update_rate=.5,mask_evapuration_rate=.1,inline=True) :
     for i in range(len(mask)) :
-        mask[i] *= (1-evapuration_rate)
-        mask[i] += best_ind[i].bit*update_rate
+        mask[i] *= (1-mask_evapuration_rate)
+        mask[i] += best_ind[i].bit*mask_update_rate
 
 def mask_collapse(mask,epsilon=1) :
     collapsed_mask = np.ndarray(len(mask))
@@ -477,7 +481,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
     for i,ind in enumerate(pop):
         toolbox.toBit(ind)
     # Masking Individual Bit Values
-    masked_pop = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in pop]
+    masked_pop = [[qb.bit and bit for qb,bit in zip(ind,collapsed_mask)] for ind in pop]
     # Calculating Fitness Of Individuals In Parallel
     with contextlib.closing(Pool(processes=25)) as pool:
         fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_pop))
@@ -521,7 +525,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
             for i,ind in enumerate(pop):
                 toolbox.toBit(ind)
             # Masking Individual Bit Values
-            masked_offspring = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in offspring]
+            masked_offspring = [[qb.bit and bit for qb,bit in zip(ind,collapsed_mask)] for ind in offspring]
             # Calculating Fitness Of Individuals In Parallel
             with contextlib.closing(Pool(processes=20)) as pool:
                 fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_offspring))
@@ -567,7 +571,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
             for i,ind in enumerate(pop):
                 toolbox.toBit(ind)
             # Masking Individual Bit Values
-            masked_offspring = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in offspring]
+            masked_offspring = [[qb.bit and bit for qb,bit in zip(ind,collapsed_mask)] for ind in offspring]
             # Calculating Fitness Of Individuals In Parallel
             with contextlib.closing(Pool(processes=20)) as pool:
                 fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_offspring))
@@ -601,7 +605,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
         for i,ind in enumerate(pop):
             toolbox.toBit(ind)
         # Masking Individual Bit Values
-        masked_pop = [[qb.bit and bit for qb in zip(ind,collapsed_mask)] for ind in pop]
+        masked_pop = [[qb.bit and bit for qb,bit in zip(ind,collapsed_mask)] for ind in pop]
 
         with contextlib.closing(Pool(processes=20)) as pool:
             fitnesses = pool.map_async(toolbox.evaluate, (ind for ind in masked_pop))
