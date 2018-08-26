@@ -419,7 +419,7 @@ def evaluate_pop(pop,collapsed_mask=None,multiprocessing=False,workers=20) :
     for i,ind in enumerate(pop):
         toolbox.toBit(ind)
     # Masking Individual Bit Values
-    
+    print(pop[0].fitness.values)
     if type(collapsed_mask) != type(None):
         masked_pop = [[qb.bit and bit for qb,bit in zip(ind,collapsed_mask)] for ind in pop]
     else :
@@ -447,6 +447,7 @@ def evaluate_pop(pop,collapsed_mask=None,multiprocessing=False,workers=20) :
                 best_ind = ind
             if i % 10 == 0 :
                 Tools.save_to_file(chromosome_file,Tools.chromosomes)
+    print(pop[0].fitness.values)
     return best_ind
 
 
@@ -626,7 +627,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
             collapsed_mask = mask_collapse(mask,epsilon)
             
             # Evaluating whole population
-            current_best_ind = evaluate_pop(pop,collapsed_mask,multiprocessing,workers)
+            current_best_ind = evaluate_pop(offspring,collapsed_mask,multiprocessing,workers)
             
             # Updating And Evapurating Mask Values
             mask_update(mask,best_ind,mask_evapuration_rate=mask_evapuration_rate,mask_update_rate=mask_update_rate)
@@ -662,7 +663,7 @@ def multiprocess_main(pop_size,iter_num,n_max,m_max,
             collapsed_mask = mask_collapse(mask,epsilon)
             
             # Evaluating whole population
-            current_best_ind = evaluate_pop(pop,collapsed_mask,multiprocessing,workers)
+            current_best_ind = evaluate_pop(offspring,collapsed_mask,multiprocessing,workers)
             
             # Updating And Evapurating Mask Values
             mask_update(mask,best_ind,mask_evapuration_rate=mask_evapuration_rate,mask_update_rate=mask_update_rate)
