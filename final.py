@@ -391,7 +391,7 @@ toolbox.register("catastrophe", catastrophe, pop_size=genetic_config['pop_size']
 # In[30]:
 
 
-def mask_update(mask,best_ind,update_rate=.5,evapuration_rate=.1,inline=True) :
+def mask_update(mask,best_ind,mask_update_rate=.5,mask_evapuration_rate=.1,inline=True) :
     for i in range(len(mask)) :
         mask[i] *= (1-evapuration_rate)
         mask[i] += best_ind[i].bit*update_rate
