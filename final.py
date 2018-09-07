@@ -130,7 +130,7 @@ genetic_config = {
     'mask_best_num':1,
     'mask_evapuration_rate':.1,
     'mask_update_rate':.5,
-    'epsilon':1,
+    'epsilon':0,
     'chrom_mask': mask
 }
 
@@ -720,7 +720,7 @@ def multiple_run(genetic_config,number_of_run=10) :
 
 if __name__ == '__main__' :
     out = multiprocess_main(**genetic_config,multiprocessing=True)
-    Tools.save_to_file(output_file,out)
+    Tools.save_to_file(output_file+'1',out)
 
 
 # In[99]:
