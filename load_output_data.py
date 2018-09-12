@@ -233,4 +233,4 @@ toolbox.register("rotate", rotate)
 
 
 if __name__ == '__main__' :
-    print(Tools.load_from_file('output(2)'))
+    print(Tools.load_from_file('output'))
