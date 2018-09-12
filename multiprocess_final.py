@@ -285,7 +285,8 @@ def evaluate(ind,X,Y,train_cycles=600,lr=.3,m=.7) :
        'float' accuracy
     """
     sel_features = np.array(ind).astype(np.int32)
-    hiddenNum = len(sel_features) + np.sum(sel_features)
+    # hiddenNum = len(sel_features) + np.sum(sel_features)
+    hiddenNum = (np.sum(sel_features) + 2)/2 + 1
     string_arr = ''.join(map(str, 1*sel_features))
     sum_val_acc = 0
     p_X = X[:,sel_features==1]
