@@ -102,12 +102,7 @@ class Qbit :
 
 # ### Reading German Dataset
 
-# In[13]:
-
-
-x_data = np.array(pd.read_excel(german_data,header=None))
-y_data = np.array(pd.read_excel(german_label,header=None))
-print('Dataset Shape : {}\nDataset Labels Shape : {}'.format(x_data.shape,y_data.shape))
+# In[13]
 
 
 # ### Initialization
@@ -118,7 +113,7 @@ print('Dataset Shape : {}\nDataset Labels Shape : {}'.format(x_data.shape,y_data
 toolbox = base.Toolbox()
 toolbox.register("attribute", Qbit)
 toolbox.register("individual", tools.initRepeat, creator.Individual,
-                 toolbox.attribute, n=x_data.shape[1]) # Length of each chromosome : Number of Features of Dataset
+                 toolbox.attribute, n=30) # Length of each chromosome : Number of Features of Dataset
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
@@ -238,4 +233,4 @@ toolbox.register("rotate", rotate)
 
 
 if __name__ == '__main__' :
-    print(Tools.load_from_file('output(0)'))
+    print(Tools.load_from_file('output'))
